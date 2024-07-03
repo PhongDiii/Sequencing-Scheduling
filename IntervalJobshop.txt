@@ -1,0 +1,67 @@
+/*********************************************
+ * OPL 12.9.0.0 Model
+ * Author: kyphuc
+ * Creation Date: Jun 5, 2020 at 7:14:10 PM
+ *********************************************/
+using CP;
+int nbJob=3;
+int nbMachine=4;
+range Job=1..nbJob;
+range Machine=1..nbMachine;
+tuple Node {
+	int machine; 
+	int job;
+};
+tuple SolidArc{
+int job;
+int pre;
+int suc;
+};
+/*
+Job 1: 1-2-3
+Job 2: 2-1-4-3
+Job 3: 1-2-4
+*/
+{Node} NodeSet={<1,1>,<2,1>,<3,1>,
+				<2,2>,<1,2>,<4,2>,<3,2>,
+				<1,3>,<2,3>,<4,3>};
+{SolidArc} SolidArcSet={<1,1,2>,<1,2,3>,
+						<2,2,1>,<2,1,4>,<2,4,3>,
+						<3,1,2>,<3,2,4>};
+int ProTime[NodeSet]=[10,8,4,
+					8,3,5,6,
+					4,7,3];
+range Time=0..30;
+dvar interval X[<m,j> in NodeSet] in Time size ProTime[<m,j>];
+dvar sequence seqM[m in Machine] in all(<m,j> in NodeSet) X[<m,j>];
+dvar sequence seqJ[j in Job] in all(<m,j> in NodeSet)X[<m,j>];
+dvar int+ Cmax;
+
+execute {
+  cp.param.TimeLimit=4*60;// setup the time limit
+}
+
+minimize Cmax;
+subject to {
+
+forall( m in Machine){
+  noOverlap(seqM[m]);
+}  
+forall( j in Job){
+  noOverlap(seqJ[j]);
+}  
+forall(n in NodeSet){
+  Cmax >= endOf(X[n]);
+}  
+forall(<j,p,s> in SolidArcSet){
+before(seqJ[j],X[<p,j>],X[<s,j>]);
+}
+
+}
+execute RESULT{
+for(m in Machine)
+{
+writeln(seqM[m]);
+}
+} 
+

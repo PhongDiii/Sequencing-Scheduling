@@ -1,0 +1,44 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: LAPTOP
+ * Creation Date: Nov 2, 2022 at 9:48:42 PM
+ *********************************************/
+using CP;
+int numJ=7;
+int numM=3;
+range rangeJ=1..numJ;
+range rangeM=1..numM;
+range rangeTime=0..20;
+tuple JM{
+	int job;
+	int machine;
+};
+{JM} JMSet={<1,1>,<1,3>,<2,1>,<2,2>,<2,3>,
+           <3,1>,<3,2>,<3,3>,<4,2>,<4,3>,<5,1>,<6,1>,<7,1>,<7,2>};   
+int r[rangeJ]=[5,0,2,3,2,4,5];
+int d[rangeJ]=[12,10,20,15,18,19,14];
+int p[rangeJ]=[3,10,9,4,6,5,3];
+int w[rangeJ]=[2,3,3,2,1,2,3];
+dvar boolean Z[rangeJ];
+dvar interval X[<j,m> in JMSet] optional  in rangeTime size p[j];
+
+dvar sequence seqM[m in rangeM] in all (<j,m> in JMSet)X[<j,m>];
+maximize sum(j in rangeJ)w[j]*Z[j];
+subject to{
+forall(<j,m> in JMSet){
+(presenceOf(X[<j,m>])==1) => startOf(X[<j,m>])>=r[j];
+(presenceOf(X[<j,m>])==1) => endOf(X[<j,m>])<=(d[j]-1);
+}
+forall(<j,m> in JMSet){
+synchronize(X[<j,m>],all(<j,n> in JMSet)X[<j,n>]);
+}
+forall(m in rangeM){
+noOverlap(seqM[m]);
+}
+forall(<j,m> in JMSet){
+presenceOf(X[<j,m>])==Z[j];
+}
+}
+
+
+
